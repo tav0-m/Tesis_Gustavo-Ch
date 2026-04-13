@@ -1,0 +1,68 @@
+data:
+  start: "2020-01-01"
+  end:   "2025-12-31"
+  interval: "1d"
+
+universe:
+  tickers:
+    - "AGUAS-A.SN"
+    - "ANDINA-B.SN"
+    - "BCI.SN"
+    - "BSANTANDER.SN"
+    - "CAP.SN"
+    - "CENCOMALLS.SN"
+    - "CMPC.SN"
+    - "ENELCHILE.SN"
+    - "ENTEL.SN"
+    - "FALABELLA.SN"
+    - "ITAUCL.SN"
+    - "MALLPLAZA.SN"
+    - "PARAUCO.SN"
+    - "RIPLEY.SN"
+    - "SQM-B.SN"
+
+  # 0.95 cubre bien el período 2020-2025 incluyendo volatilidad COVID.
+  min_coverage: 0.95
+
+returns:
+  horizon_H: 5          # horizonte terminal H días
+  method: "simple"      # retornos simples (pct_change)
+  n_paths: 10000        # paths Monte Carlo para simulación terminal
+
+mm:
+  # ─── Escenarios ────────────────────────────────────────────────────────
+  # Cota mínima teórica para n=14 activos:
+  #   especificaciones = 4·n + n·(n-1)/2 = 56 + 91 = 147
+  # Se usa 200 para tener holgura y capturar bien las colas.
+  N_scenarios: 200
+
+  # ─── BCD ───────────────────────────────────────────────────────────────
+  bcd_max_iter: 150     # era 25 — más iteraciones para convergencia real    
+  tol: 1.0e-5          # era 1e-6 — más estricto  -- anteriormente 1e-7 
+  min_iter: 5          # mínimo de iteraciones antes de evaluar convergencia
+  n_starts: 5         # multi-start: 3 semillas distintas, se retiene mejor F 
+
+  seed: 123            # semilla base (cada start usa seed + k·1000)
+
+  # ─── Pesos globales ────────────────────────────────────────────────────
+  w_moments: 1.0
+  w_cov: 1.0
+
+  # ─── Pesos por momento ─────────────────────────────────────────────────
+  # Justificación:
+  #   k1 (media):     peso alto — error en media distorsiona toda la distribución
+  #   k2 (varianza):  peso alto — determina escala del riesgo
+  #   k3 (skewness):  peso moderado — difícil de ajustar con N finito
+  #   k4 (kurtosis):  peso bajo — muy sensible a outliers, puede desestabilizar BCD
+  # En iteraciones tempranas conviene que k3/k4 no dominen el gradiente.
+  moment_weights:
+    k1: 2.0
+    k2: 1.5
+    k3: 0.5
+    k4: 0.3
+
+plots:
+  bins: 30
+
+output:
+  out_dir: "outputs"
